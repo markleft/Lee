@@ -17,6 +17,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// saving to textfile hack
+use std::fs::OpenOptions;
+use std::io::prelude::*;
 
 /*
     Binding to toxcore
@@ -77,6 +80,8 @@ struct Bot {
         fed from file.
     */
     markov: Chain<String>,
+    
+    bmarkov: Chain<String>,
 
     /**
         Vector with hashes of received messages.
@@ -152,8 +157,9 @@ impl Bot {
             tox: Tox::new(ToxOptions::new(), data.as_ref()
                                             .map(|x| &**x)).unwrap(),
 
-            name: "Lee".to_string(),
+            name: "George Lincoln Robot".to_string(),
             markov: for_files::make_chain("markov.json"),
+            bmarkov: for_files::bmake_chain("bmarkov.json"),
             hashes: vec![],
             last_save: UTC::now().timestamp(),
             last_group: 0,
@@ -191,6 +197,9 @@ impl Bot {
     fn add_to_markov(&mut self, message: &str) {
         if let Some(msg) = self.check_hash(message.to_string()) {
             self.markov.feed_str(&msg);
+            let mut bmsg = &msg;
+            let mut h = bmsg.split_whitespace().rev().collect::<Vec<_>>().join(" ");
+            self.bmarkov.feed_str(&h);
         }
     }
 
@@ -210,7 +219,7 @@ impl Bot {
                          UTC::now(), m);
             },
             None => {
-                drop(self.tox.set_status_message("Send me a message 'invite' to get into the groupchat"));
+                drop(self.tox.set_status_message("I am not very smart yet"));
                 println!("{}: Status message set to default one",
                          UTC::now());
             },
@@ -218,13 +227,25 @@ impl Bot {
     }
 }
 
+//brain text hack
+fn save_the_message(message: &str) {
+    let mut file = 
+        OpenOptions::new()
+        .write(true)
+        .append(true)
+        .open("markov.txt")
+        .unwrap();
+    if let Err(e) = writeln!(file, "{}", message) {
+        println!("{}", e);
+    }
+}
 
 
 /*
     Defend honour of a bot.
     As extended measure, compares public key of peer.
 */
-const FAKE_NAMES: &'static [&'static str] = &["Lee", "Lee\0"];
+const FAKE_NAMES: &'static [&'static str] = &["George Lincoln Robot", "George Lincoln Robot\0"];
 
 
 
@@ -262,12 +283,12 @@ fn on_friend_message(bot: &mut Bot, fnum: u32, msg: String) {
 
         TODO: make it possible to print to stdout friend's name when inviting
     */
-    if &msg == "invite" {
+    /*if &msg == "invite" {
         drop(bot.tox.invite_friend(fnum as i32, bot.last_group));
         println!("{}: Sent invitation to friend {} to groupchat {}",
             UTC::now(), fnum, bot.last_group);
         return;
-    }
+    }*/
 
     println!("{}: Event: FriendMessage:\nFriend {} sent message: {}",
             UTC::now(), pubkey, &msg);
@@ -279,6 +300,7 @@ fn on_friend_message(bot: &mut Bot, fnum: u32, msg: String) {
         Feeding Lee with what it threw up may not be a good idea after all..
     */
     if pubkey != bot.tox.get_public_key() {
+        save_the_message(&msg);
         bot.add_to_markov(&msg);
     }
 
@@ -298,6 +320,10 @@ Many thanks to all the people who helped in making it.
 For more info, visit: https://gitlab.com/zetok/Lee");
         drop(bot.tox.send_friend_message(fnum, MessageType::Normal, &message));
         println!("{}: Sent \"About\" message to friend {}", UTC::now(), fnum);
+    } else if msg == ".id" {
+        let message = format!("My ID: {}", bot.tox.get_address());
+        drop(bot.tox.send_friend_message(fnum, MessageType::Normal, &message));
+        println!("{}: Sent \"ID\" message to friend {}", UTC::now(), fnum);
     } else {
         let message = bot.markov.generate_str();
         println!("Answer: {}", &message);
@@ -356,8 +382,9 @@ fn on_group_message(bot: &mut Bot, gnum: i32, pnum: i32, msg: String) {
     fn trigger_response(msg: &String, bot: &mut Bot) {
         // check whether name is mentioned — convert message to lowercase and
         // then look for lowercase name of bot in message
-        if msg.to_lowercase().contains(&bot.name.to_lowercase()) {
+        if msg.to_lowercase().contains(&bot.name.to_lowercase()) || msg.to_lowercase().starts_with("georg") || msg.to_lowercase().contains("glr") || true == true {
             bot.trigger = true;
+            actually_send_a_reply(msg, bot);
             /*
                 ↓ waiting time for response should be random, for more
                 human-like feel, and should be at least 2s long – too
@@ -381,6 +408,7 @@ fn on_group_message(bot: &mut Bot, gnum: i32, pnum: i32, msg: String) {
             */
 
             if pubkey != bot.tox.get_public_key() {
+                save_the_message(&msg);
                 bot.add_to_markov(&msg);
             }
 
@@ -413,7 +441,7 @@ fn on_group_message(bot: &mut Bot, gnum: i32, pnum: i32, msg: String) {
         Allow anyone to turn speaking `on / off`, and if switch is changed,
         alter status message accordingly.
     */
-    if msg == ".stahp" {
+    /*if msg == ".stahp" {
         if bot.speak == true {
             bot.speak = false;
             let new_status = format!("{} | groupchat talk: off",
@@ -427,20 +455,20 @@ fn on_group_message(bot: &mut Bot, gnum: i32, pnum: i32, msg: String) {
             bot.tox.set_status(UserStatus::None);
             bot.status_message(None);
         }
-    }
+    }*/
 
     /*
         Allow anyone to get Lee's ID
     */
-    if msg == ".id" && pubkey != bot.tox.get_public_key() {
+    /*if msg == ".id" && pubkey != bot.tox.get_public_key() {
         let message = format!("My ID: {}", bot.tox.get_address());
         drop(bot.tox.group_message_send(gnum, &message));
-    }
+    }*/
 
     /*
         Send "about" message
     */
-    if msg == ".about" || msg == ".help" {
+    /*if msg == ".about" || msg == ".help" {
         let message = format!(
 "Lee is libre software, licensed under GPLv3+.
 
@@ -449,7 +477,7 @@ Many thanks to all the people who helped in making it.
 
 For more info, visit: https://github.com/zetok/Lee");
         drop(bot.tox.group_message_send(gnum, &message));
-    }
+    }*/
 }
 
 
@@ -480,6 +508,30 @@ fn on_group_namelist_change(tox: &mut Tox, gnum: i32, pnum: i32,
     }
 }
 
+/*
+ * this is broken
+ * i want to pick the longest word from the message
+ * i stopped halfway through trying to figure out iterators so it doesn't
+ * compile at all
+ */
+fn actually_send_a_reply(msg: &String, bot: &mut Bot ) {
+    let msgvec = msg.split_whitespace().collect::<Vec<_>>();
+    let lngst = "the";
+    for i in msgvec {
+        if msgvec[i] > lngst {
+            lngst = msgvec[i];
+        }
+    }
+    //this is the rest of the function this works fine
+    //just included for completion
+    let theword = lngst;
+    let fmessage = bot.markov.generate_str_from_token(theword);
+    let mut bmessage = bot.bmarkov.generate_str_from_token(theword);
+    bmessage = bmessage.to_string().trim_left_matches(theword).to_string();
+    bmessage = bmessage.split_whitespace().rev().collect::<Vec<_>>().join(" ");
+    let message = format!("{} {}", &bmessage, fmessage);
+    drop(bot.tox.group_message_send(bot.last_group, &message));
+}
 
 fn main() {
     /*
@@ -550,8 +602,6 @@ fn main() {
         if bot.trigger {
             let cur_time = UTC::now().timestamp();
             if cur_time >= bot.trigger_time {
-                let message = bot.markov.generate_str();
-                drop(bot.tox.group_message_send(bot.last_group, &message));
                 bot.trigger = false;
             }
         }
@@ -565,7 +615,7 @@ fn main() {
             let cur_time = UTC::now().timestamp();
             if  (bot.last_time + 10) < cur_time {
                 /* Should have only small chance to speak */
-                if 0.01 > bot.random.gen::<f64>() {
+                if 0.02 > bot.random.gen::<f64>() {
                     let message = bot.markov.generate_str();
                     drop(bot.tox.group_message_send(bot.last_group, &message));
                 }
@@ -589,7 +639,7 @@ fn main() {
                 Err(e) => println!("\n{}: Failed to save file: {}",
                                 UTC::now(), e),
             }
-            drop(bot.markov.save_utf8("markov.json"));
+            /*drop(bot.markov.save_utf8("markov.json"));*/
             println!("{}: Saved `markov.json`", UTC::now());
             bot.last_save = cur_time;
         }

@@ -11,7 +11,6 @@ git = "https://github.com/suhr/rstox.git"
 
 [dependencies.markov]
 git = "https://github.com/aatxe/markov.git"
-rev = "e1a856cb6f186190a50af3b9f7dcb7fcd4d822ad"
 
 [dependencies.chrono]
 chrono = "0.2"

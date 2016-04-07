@@ -94,6 +94,7 @@ pub fn feed_markov(chain: &mut Chain<String>) {
             string.push_str(&line);
 
             // feed markov with it
+            /*chain.order(2);*/
             chain.feed_str(&string);
 
             // ...aaaand clear string
@@ -102,25 +103,83 @@ pub fn feed_markov(chain: &mut Chain<String>) {
     }
 }
 
+pub fn bfeed_markov(chain: &mut Chain<String>) {
+    /*
+        Get vector of strings from the file `markov.txt`. In a case where
+        there is no file supplied, return early without feeding chain.
+    */
+    let vec_of_strings: Vec<String> = match vec_strings("markov.txt") {
+        Ok(v) => v,
+        Err(_) => return,
+    };
 
+    /*
+        Initialize string to feed markov
+    */
+    let mut string: String = String::new();
+
+    for line in vec_of_strings {
+        if line.starts_with("//") || line.starts_with("/*") || line == "" {
+            // just skip this line
+            continue;
+        } else if line.ends_with("\\") {
+            // push it to string
+            string.push_str(&line);
+            // check for length after size increased, and before it gets
+            // truncated ↓
+            let string_len = string.len();
+
+            // truncate not needed `\\`
+            string.truncate(string_len - 2);
+
+            // since \n is not treated as char, and cant be `.push(char)`
+            // to string.. make it a &str, and `.push_str()` it
+            string.push_str("\n");
+        } else {
+            // ↓ push to string
+            string.push_str(&line);
+
+            // feed markov with it
+            /*chain.order(2);*/
+            let mut bstring = string.split_whitespace().rev().collect::<Vec<_>>().join(" ");
+            chain.feed_str(&bstring);
+
+            // ...aaaand clear string
+            string.clear();
+        }
+    }
+}
 /**
     Function to make chain - either load it from a file, or, if that will
     fail for some reason, make an empty chain and feed it with contents of
     plaintext file.
 */
 pub fn make_chain(file: &str) -> Chain<String> {
+    let mut chain = Chain::new();
+    // try to feed it from a plaintext file
+    feed_markov(&mut chain);
+    chain
+}
+pub fn bmake_chain(file: &str) -> Chain<String> {
+    let mut bchain = Chain::new();
+    // try to feed it from a plaintext file
+    bfeed_markov(&mut bchain);
+    bchain
+}
+/*
+pub fn make_chain(file: &str) -> Chain<String> {
     match Chain::load_utf8(file) {
         Ok(data) => data,
         Err(e) => {
             println!("Error loading `{}`: {}", file, e);
-            let mut chain = Chain::for_strings();
+            let mut chain = Chain::new();
             // try to feed it from a plaintext file
             feed_markov(&mut chain);
             chain
         },
     }
 }
-
+*/
 
 /**
     Function to load save file from `save.tox` file.

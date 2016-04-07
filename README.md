@@ -1,3 +1,11 @@
+This fork uses two chains to generate relevant replies to group messages.
+
+Some features, like .id, have been disabled for groups.
+
+This makes the bot blend in better.
+
+---------------------------------------------
+
 This is a markov bot for Tox groupchats. It's the best `;)`
 
 More features may come along the way `:)`

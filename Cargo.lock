@@ -3,7 +3,7 @@ name = "lee"
 version = "0.0.15"
 dependencies = [
  "chrono 0.2.21 (registry+https://github.com/rust-lang/crates.io-index)",
- "markov 0.0.29 (git+https://github.com/aatxe/markov.git?rev=e1a856cb6f186190a50af3b9f7dcb7fcd4d822ad)",
+ "markov 0.0.32 (git+https://github.com/aatxe/markov.git)",
  "rand 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "rstox 0.0.1 (git+https://github.com/suhr/rstox.git)",
 ]
@@ -33,11 +33,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "markov"
-version = "0.0.29"
-source = "git+https://github.com/aatxe/markov.git?rev=e1a856cb6f186190a50af3b9f7dcb7fcd4d822ad#e1a856cb6f186190a50af3b9f7dcb7fcd4d822ad"
+version = "0.0.32"
+source = "git+https://github.com/aatxe/markov.git#31da650cddc90788dbb79488f8d98a41780758ad"
 dependencies = [
  "rand 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)",
- "rustc-serialize 0.3.18 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -60,11 +59,6 @@ source = "git+https://github.com/suhr/rstox.git#dfaa72b254aa4ce80bc9706cd3fa927c
 dependencies = [
  "libc 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
-
-[[package]]
-name = "rustc-serialize"
-version = "0.3.18"
-source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "time"
