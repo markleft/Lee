@@ -515,7 +515,7 @@ fn actually_send_a_reply(msg: &String, bot: &mut Bot ) {
     let strings: Vec<&str> = msg.split_whitespace().collect();
     let mut longest = "the";
     for string in strings {
-        if string.len() > longest.len() && string != "George" && string != "Lincoln" && string != "Robot" {
+        if string.len() > longest.len() && string != "George" && string != "Lincoln" && string != "Robot:" {
             longest = string;
         }
     }
