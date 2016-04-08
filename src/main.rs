@@ -382,7 +382,7 @@ fn on_group_message(bot: &mut Bot, gnum: i32, pnum: i32, msg: String) {
     fn trigger_response(msg: &String, bot: &mut Bot) {
         // check whether name is mentioned — convert message to lowercase and
         // then look for lowercase name of bot in message
-        if msg.to_lowercase().contains(&bot.name.to_lowercase()) || msg.to_lowercase().starts_with("georg") || msg.to_lowercase().contains("glr") || true == true {
+        if msg.to_lowercase().contains(&bot.name.to_lowercase()) || msg.to_lowercase().starts_with("georg") || msg.to_lowercase().contains("glr") {
             bot.trigger = true;
             actually_send_a_reply(msg, bot);
             /*
@@ -509,22 +509,17 @@ fn on_group_namelist_change(tox: &mut Tox, gnum: i32, pnum: i32,
 }
 
 /*
- * this is broken
- * i want to pick the longest word from the message
- * i stopped halfway through trying to figure out iterators so it doesn't
- * compile at all
+ * thx zetok <3
  */
 fn actually_send_a_reply(msg: &String, bot: &mut Bot ) {
-    let msgvec = msg.split_whitespace().collect::<Vec<_>>();
-    let lngst = "the";
-    for i in msgvec {
-        if msgvec[i] > lngst {
-            lngst = msgvec[i];
+    let strings: Vec<&str> = msg.split_whitespace().collect();
+    let mut longest = "the";
+    for string in strings {
+        if string.len() > longest.len() && string != "George" && string != "Lincoln" && string != "Robot" {
+            longest = string;
         }
     }
-    //this is the rest of the function this works fine
-    //just included for completion
-    let theword = lngst;
+    let theword = &longest;
     let fmessage = bot.markov.generate_str_from_token(theword);
     let mut bmessage = bot.bmarkov.generate_str_from_token(theword);
     bmessage = bmessage.to_string().trim_left_matches(theword).to_string();
